@@ -8,7 +8,10 @@ public class DaoFactory {
 
 	@Bean
 	public UserDao userDao(){
-		return new UserDao(connectionMaker());
+//		return new UserDao(connectionMaker());
+		UserDao userDao = new UserDao();
+		userDao.setConnectionMaker(connectionMaker());
+		return userDao;
 	}
 
 	@Bean // 오브젝트 생성을 담당하는 IoC 메소드라는 표시
