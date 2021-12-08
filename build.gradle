@@ -30,7 +30,6 @@ dependencies {
 	implementation group: 'cglib', name: 'cglib', version: '2.2.2'
 	implementation group: 'org.ow2.asm', name: 'asm', version: '9.2'
 
-
 }
 
 test {
