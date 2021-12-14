@@ -1,12 +1,6 @@
 package springbook.user.domain;
 
-/**
- * <pre>
- *
- * </pre>
- *
- * @author SeongKyoung
- */
+
 public class User {
 
 	String id;
