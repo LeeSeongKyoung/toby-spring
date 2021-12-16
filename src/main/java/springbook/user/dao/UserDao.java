@@ -1,6 +1,7 @@
 package springbook.user.dao;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.dao.EmptyResultDataAccessException;
 import springbook.user.domain.User;
 
 import javax.sql.DataSource;
@@ -9,11 +10,6 @@ import java.sql.*;
 
 public class UserDao {
 
-/*	private ConnectionMaker connectionMaker;
-
-	public void setConnectionMaker(ConnectionMaker connectionMaker) {
-		this.connectionMaker = connectionMaker;
-	}*/
 	private DataSource dataSource;
 
 	public void setDataSource(DataSource dataSource){
@@ -22,8 +18,6 @@ public class UserDao {
 
 
 	public  void add(User user) throws ClassNotFoundException, SQLException{
-
-//		Connection c = connectionMaker.makerConnection();
 
 		Connection c = dataSource.getConnection();
 
@@ -41,7 +35,6 @@ public class UserDao {
 
 
 	public User get(String id) throws ClassNotFoundException, SQLException{
-//		Connection c = connectionMaker.makerConnection();
 		Connection c = dataSource.getConnection();
 
 		PreparedStatement ps = c.prepareStatement(
@@ -49,17 +42,49 @@ public class UserDao {
 		ps.setString(1, id);
 
 		ResultSet rs = ps.executeQuery();
-		rs.next();
-		User user = new User();
-		user.setId(rs.getString("id"));
-		user.setName(rs.getString("name"));
-		user.setPassword(rs.getString("password"));
+
+		User user = null; // User는 null 상태로 초기화
+		if(rs.next()){ // id를 조건으로 한 쿼리의 결과가 있으면 User 오브젝트를 만들고 값을 넣어줌
+			user = new User();
+			user.setId(rs.getString("id"));
+			user.setName(rs.getString("name"));
+			user.setPassword(rs.getString("password"));
+		}
 
 		rs.close();
 		ps.close();
 		c.close();
 
+		if(user == null) throw new EmptyResultDataAccessException(1);
+
 		return user;
+	}
+
+	public void deleteAll() throws SQLException, ClassNotFoundException {
+		Connection c = dataSource.getConnection();
+
+		PreparedStatement ps = c.prepareStatement("delete from users");
+
+		ps.executeUpdate();
+
+		ps.close();
+		c.close();
+	}
+
+	public int getCount() throws SQLException, ClassNotFoundException{
+		Connection c = dataSource.getConnection();
+
+		PreparedStatement ps = c.prepareStatement("select count(*) from users");
+
+		ResultSet rs = ps.executeQuery();
+		rs.next();
+		int count = rs.getInt(1);
+
+		rs.close();
+		ps.close();
+		c.close();
+
+		return count;
 	}
 
 }
