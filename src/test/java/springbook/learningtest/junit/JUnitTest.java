@@ -16,6 +16,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.*;
 
+// chap3
 // JUnit5
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations="/applicationContext.xml")
@@ -26,7 +27,6 @@ public class JUnitTest {
 
 	static Set<JUnitTest> testObjects = new HashSet<JUnitTest>();
 	static ApplicationContext contextObject = null;
-
 
 	@Test
 	public void test1(){
@@ -51,5 +51,4 @@ public class JUnitTest {
 		assertThat(contextObject == null || contextObject == this.context).isTrue();
 		contextObject = this.context;
 	}
-
 }
