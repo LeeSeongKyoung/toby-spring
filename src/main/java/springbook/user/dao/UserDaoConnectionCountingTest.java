@@ -3,6 +3,9 @@ package springbook.user.dao;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import springbook.user.domain.User;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.SQLException;
 
 public class UserDaoConnectionCountingTest {
@@ -24,4 +27,5 @@ public class UserDaoConnectionCountingTest {
 		CountingConnectionMaker ccm = context.getBean("connectionMaker", CountingConnectionMaker.class);
 		System.out.println("Connection counter : " + ccm.getCounter());
 	}
+
 }
