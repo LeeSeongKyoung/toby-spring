@@ -31,6 +31,7 @@ public class UserDao {
 			user.setName(rs.getString("name"));
 			user.setPassword(rs.getString("password"));
 			return user;
+
 		}
 	};
 
