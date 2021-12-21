@@ -2,15 +2,13 @@ package springbook.user.dao;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.GenericXmlApplicationContext;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.jdbc.support.SQLErrorCodeSQLExceptionTranslator;
+import org.springframework.jdbc.support.SQLExceptionTranslator;
 import springbook.user.domain.User;
 
 import javax.sql.DataSource;
@@ -24,8 +22,10 @@ import static org.junit.jupiter.api.Assertions.*;
 //@ExtendWith(SpringExtension.class)
 //@ContextConfiguration(locations="/applicationContext.xml")
 public class UserDaoTestTest {
-
-	UserDao dao;
+	@Autowired
+	UserDaoJdbc dao;
+	@Autowired
+	DataSource dataSource;
 
 	// setUp() 메소드에서 만드는 오브젝트를 테스트 메소드에서 사용할 수 있도록 인스턴스 변수로 선언
 	// 픽스처
@@ -39,7 +39,7 @@ public class UserDaoTestTest {
 	@BeforeEach
 	public void setUp(){
 //		this.dao = context.getBean("userDao", UserDao.class);
-		dao = new UserDao();
+		dao = new UserDaoJdbc();
 		DataSource dataSource = new SingleConnectionDataSource(
 				"jdbc:h2:tcp://localhost/~/test", "user", "password", true
 		);
@@ -136,6 +136,33 @@ public class UserDaoTestTest {
 		assertThat(user1.getId()).isEqualTo(user2.getId());
 		assertThat(user1.getName()).isEqualTo(user2.getName());
 		assertThat(user1.getPassword()).isEqualTo(user2.getPassword());
+	}
+
+	@Test
+	public void duplicateKey(){
+		dao.deleteAll();
+
+		dao.add(user1);
+		dao.add(user1);  // 강제로 같은 사용자 두번 등록, 여기서 예외발생해야함
+
+//		assertThrows(DataAccessException.class, () ->{
+//			dao.add(user1);
+//		});
+	}
+
+	@Test
+	public void sqlExceptionTranslate(){
+		dao.deleteAll();
+
+		try {
+			dao.add(user1);
+			dao.add(user1);
+		} catch (DuplicateKeyException exception) {
+			SQLException sqlEx = (SQLException) exception.getRootCause();
+			SQLExceptionTranslator set = new SQLErrorCodeSQLExceptionTranslator(this.dataSource);
+
+			assertThat(set.translate(null, null, sqlEx)).isEqualTo(DuplicateKeyException.class);
+		}
 	}
 
 }
