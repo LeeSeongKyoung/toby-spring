@@ -15,6 +15,7 @@ import springbook.user.domain.User;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,9 +44,9 @@ public class UserDaoTestTest {
 				"jdbc:h2:tcp://localhost/~/test", "user", "password", true
 		);
 		dao.setDataSource(dataSource);
-		this.user1 = new User("gyumee1", "박성철1", "springno1");
-		this.user2 = new User("gyumee2", "박성철2", "springno2");
-		this.user3 = new User("gyumee3", "박성철3", "springno3");
+		this.user1 = new User("gyumee", "박성철1", "springno1");
+		this.user2 = new User("leegw700", "박성철2", "springno2");
+		this.user3 = new User("bumjin", "박성철3", "springno3");
 	}
 
 
@@ -100,6 +101,41 @@ public class UserDaoTestTest {
 		assertThrows(EmptyResultDataAccessException.class, () -> dao.get("unkown_id"));
 		// 이 메소드 실행 중에 예외가 발생해야 함. 예외가 발생하지 않으면 테스트 실패
 		// 모든 User 데이터를 지우고 존재하지 않는 id로 get()메소드를 실행하는 test
+	}
+
+	@Test
+	public void getAll() throws SQLException,ClassNotFoundException{
+		dao.deleteAll();
+
+		// 예외
+		List<User> users0 = dao.getAll();
+		assertThat(users0.size()).isEqualTo(0);
+
+		dao.add(user1);
+		List<User> users1 = dao.getAll();
+		assertThat(users1.size()).isEqualTo(1);
+		checkSameUser(user1, users1.get(0));
+
+		dao.add(user2);
+		List<User> users2 = dao.getAll();
+		assertThat(users2.size()).isEqualTo(2);
+		checkSameUser(user1, users2.get(0));
+		checkSameUser(user2, users2.get(1));
+
+		dao.add(user3);
+		List<User> users3 = dao.getAll();
+		assertThat(users3.size()).isEqualTo(3);
+		// user3의 id 값이 알파벳순으로 가장 빠르므로 getAll()의 첫번째 엘리먼트여야함
+		checkSameUser(user3, users3.get(0));
+		checkSameUser(user1, users3.get(1));
+		checkSameUser(user2, users3.get(2));
+	}
+
+	// User 오브젝트의 내용을 비교하는 검증 코드. 테스트에서 반복적으로 사용되므로 분리해둠
+	private void checkSameUser(User user1, User user2) {
+		assertThat(user1.getId()).isEqualTo(user2.getId());
+		assertThat(user1.getName()).isEqualTo(user2.getName());
+		assertThat(user1.getPassword()).isEqualTo(user2.getPassword());
 	}
 
 }
