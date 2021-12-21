@@ -16,7 +16,7 @@ import java.util.List;
 
 
 public class UserDaoJdbc implements UserDao{
-	// chap4
+	// chap5
 	public void setDataSource(DataSource dataSource){
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
 	}
