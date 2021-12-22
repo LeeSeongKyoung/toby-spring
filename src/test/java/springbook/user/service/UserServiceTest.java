@@ -4,10 +4,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import springbook.user.dao.UserDao;
-import springbook.user.dao.UserDaoJdbc;
+import org.springframework.test.context.web.WebAppConfiguration;
 import springbook.user.domain.Level;
 import springbook.user.domain.User;
 
@@ -18,16 +18,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 // JUnit5
-@ExtendWith(SpringExtension.class)
+@SpringBootTest
 @ContextConfiguration(locations="/applicationContext.xml")
 class UserServiceTest {
 
 	@Autowired
 	UserService userService;
 
-	// ??? 결국 UserDaoJdbc를 직접 가져오는건데 아닌거같은데..
-	@Autowired
-	UserDaoJdbc userDao;
+	@Test
+	public void bean(){
+		assertThat(this.userService).isNotNull();
+	}
+
+/*
 
 	// 테스트 픽스처
 	List<User> users;
@@ -46,7 +49,9 @@ class UserServiceTest {
 	@Test
 	public void upgradeLevels(){
 		userDao.deleteAll();
-		for(User user : users) userDao.add(user);
+		for(User user : users) {
+			userDao.add(user);
+		}
 
 		userService.upgradeLevels();
 
@@ -63,5 +68,25 @@ class UserServiceTest {
 		User userUpdate = userDao.get(user.getId());
 		assertThat(userUpdate.getLevel()).isEqualTo(expectedLevel);
 	}
+
+	@Test
+	public void add(){
+		userDao.deleteAll();
+
+		User userWithLevel = users.get(4); // GOLD 레벨
+		User userWithoutLevel = users.get(0); // 레벨이 비어있는 사용자, 로직에 따라 등록 중에 BASIC 레벨도 설정돼야 함
+		userWithoutLevel.setLevel(null);
+
+		userService.add(userWithLevel);
+		userService.add(userWithoutLevel);
+
+		User userWithLevelRead = userDao.get(userWithLevel.getId());
+		User userwithoutLevelRead = userDao.get(userWithoutLevel.getId());
+		// DB에 저장된 결과를 가져와 확인
+
+		assertThat(userWithLevelRead.getLevel()).isEqualTo(userWithLevel.getLevel());
+		assertThat(userwithoutLevelRead.getLevel()).isEqualTo(Level.BASIC);
+	}
+*/
 
 }

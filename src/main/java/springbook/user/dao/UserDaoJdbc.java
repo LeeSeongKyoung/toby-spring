@@ -1,5 +1,6 @@
 package springbook.user.dao;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -22,6 +23,7 @@ public class UserDaoJdbc implements UserDao{
 		this.jdbcTemplate = new JdbcTemplate(dataSource);
 	}
 
+	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
 	private RowMapper<User> userMapper = new RowMapper<User>() {
