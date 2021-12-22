@@ -10,6 +10,10 @@ public class User {
 	int login;
 	int recommend;
 
+	Level level;
+	int login;
+	int recommend;
+
 	public User(){}
 	public User(String id, String name, String password) {
 		this.id = id;

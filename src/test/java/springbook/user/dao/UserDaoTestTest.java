@@ -48,7 +48,11 @@ public class UserDaoTestTest {
 
 
 	@Test
+<<<<<<< HEAD
 	public void addAndGet() throws SQLException, ClassNotFoundException{
+=======
+	public void addAndGet(){
+>>>>>>> 04c9c1fd77ef995a073af7c1ff61e23c2e407da1
 
 		dao.deleteAll();
 		assertThat(dao.getCount()).isEqualTo(0);
@@ -66,7 +70,11 @@ public class UserDaoTestTest {
 
 
 	@Test
+<<<<<<< HEAD
 	public void count() throws SQLException, ClassNotFoundException{
+=======
+	public void count(){
+>>>>>>> 04c9c1fd77ef995a073af7c1ff61e23c2e407da1
 
 		dao.deleteAll();
 		assertThat(dao.getCount()).isEqualTo(0);
@@ -82,7 +90,7 @@ public class UserDaoTestTest {
 	}
 
 	@Test
-	public void getUserFailure() throws SQLException, ClassNotFoundException{
+	public void getUserFailure(){
 
 		dao.deleteAll();
 		assertThat(dao.getCount()).isEqualTo(0);
@@ -93,7 +101,7 @@ public class UserDaoTestTest {
 	}
 
 	@Test
-	public void getAll() throws SQLException,ClassNotFoundException{
+	public void getAll() {
 		dao.deleteAll();
 
 		// 예외
@@ -162,7 +170,11 @@ public class UserDaoTestTest {
 	public void update(){
 		dao.deleteAll();
 
+<<<<<<< HEAD
 		dao.add(user1);
+=======
+		dao.add(user1); // 수정할 사용자
+>>>>>>> 04c9c1fd77ef995a073af7c1ff61e23c2e407da1
 		dao.add(user2); // 수정하지 않을 사용자
 
 		user1.setName("오민규");
@@ -170,6 +182,10 @@ public class UserDaoTestTest {
 		user1.setLevel(Level.GOLD);
 		user1.setLogin(1000);
 		user1.setRecommend(999);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 04c9c1fd77ef995a073af7c1ff61e23c2e407da1
 		dao.update(user1);
 
 		User user1update = dao.get(user1.getId());
