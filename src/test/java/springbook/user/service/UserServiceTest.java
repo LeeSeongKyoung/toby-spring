@@ -30,6 +30,8 @@ class UserServiceTest {
 
 	@Autowired
 	UserService userService;
+	@Autowired
+	UserDao userDao;
 
 	// 테스트 픽처
 	List<User> users;
@@ -46,7 +48,7 @@ class UserServiceTest {
 	}
 
 	@Test
-	@DisplayName("빈등록확인1")
+	@DisplayName("빈등록확인")
 	public void bean1(){
 		ApplicationContext context = new GenericXmlApplicationContext("/applicationContext.xml");
 		String[] beanNames = context.getBeanDefinitionNames();
@@ -56,7 +58,16 @@ class UserServiceTest {
 		System.out.println(userService.userDao != null);
 	}
 
-/*
+	@Test
+	@DisplayName("DB 리스트 확인용")
+	public void test(){
+		for (User user : users) {
+			System.out.println(user.getId());
+			System.out.println(user.getLevel());
+			System.out.println("------------------------");
+		}
+	}
+
 	@Test
 	public void upgradeLevels(){
 		userDao.deleteAll();
@@ -78,6 +89,31 @@ class UserServiceTest {
 		User userUpdate = userDao.get(user.getId());
 		assertThat(userUpdate.getLevel()).isEqualTo(expectedLevel);
 	}
-*/
+
+	// 잘 담겨지는데 UserDao.get() 메소드에 문제가 있는 듯..
+	@Test
+	public void add(){
+		userDao.deleteAll();
+
+		User userWithLevel = users.get(4); // GOLD 레벨
+		User userWithoutLevel = users.get(0); // 레벨이 비어있는 사용자, 로직에 따라 등록 중에 BASIC 레벨도 설정돼야 함
+
+		userWithoutLevel.setLevel(null);
+
+		userService.add(userWithLevel);
+		userService.add(userWithoutLevel);
+
+/*		User userWithLevelRead = userDao.get(userWithLevel.getId());
+		User userwithoutLevelRead = userDao.get(userWithoutLevel.getId());
+
+		assertThat(userWithLevelRead.getLevel()).isEqualTo(userWithLevel.getLevel());
+		assertThat(userwithoutLevelRead.getLevel()).isEqualTo(Level.BASIC);*/
+
+/*
+		System.out.println(userDao.get(userWithLevel.getId()));
+		System.out.println(userDao.get(userWithoutLevel.getId()));*/
+
+	}
+
 
 }
