@@ -1,28 +1,24 @@
 package springbook.user.service;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.GenericXmlApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import springbook.user.dao.UserDao;
-import springbook.user.dao.UserDaoJdbc;
 import springbook.user.domain.Level;
 import springbook.user.domain.User;
-
+import static springbook.user.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
+import static springbook.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations="/applicationContext.xml")
@@ -39,11 +35,11 @@ class UserServiceTest {
 	@BeforeEach
 	public void setUp(){
 		users = Arrays.asList(
-				new User("bumjin", "박범진", "p1", Level.BASIC, 49, 0),
-				new User("joytouch", "강명성", "p2", Level.BASIC, 50, 0),
-				new User("erwins", "신승한","p3",Level.SILVER,60,29),
-				new User("madnite1","이상호","p4",Level.SILVER, 60, 30),
-				new User("green", "오민규", "p5", Level.GOLD, 100, 100)
+				new User("bumjin", "박범진", "p1", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER-1, 0),
+				new User("joytouch", "강명성", "p2", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER, 0),
+				new User("erwins", "신승한","p3",Level.SILVER,MIN_RECOMMEND_FOR_GOLD-1,29),
+				new User("madnite1","이상호","p4",Level.SILVER, MIN_RECOMMEND_FOR_GOLD, 30),
+				new User("green", "오민규", "p5", Level.GOLD, 100, Integer.MAX_VALUE)
 		);
 	}
 
@@ -60,30 +56,35 @@ class UserServiceTest {
 
 
 	@Test
+	@DisplayName("사용자 레벨 업그레이드 테스트")
 	public void upgradeLevels(){
 		userDao.deleteAll();
 
-		for(User user : users) userDao.add(user);
+		for(User user : users) {
+			userDao.add(user);
+		}
 
 		userService.upgradeLevels();
 
-		for (User user : users) {
-			System.out.println(user.getLevel());
-			System.out.println("---------------");
-		}
-
 		// 각 사용자별로 업그레이드 후의 예상 레벨을 검증
-/*		checkLevel(users.get(0), Level.BASIC);
-		checkLevel(users.get(1), Level.SILVER);
-		checkLevel(users.get(2), Level.SILVER);
-		checkLevel(users.get(3), Level.GOLD);
-		checkLevel(users.get(4), Level.GOLD);*/
+		checkLevelUpgraded(users.get(0), false);
+		checkLevelUpgraded(users.get(1), true);
+		checkLevelUpgraded(users.get(2), false);
+		checkLevelUpgraded(users.get(3), true);
+		checkLevelUpgraded(users.get(4), false);
+
 	}
 
 	// DB에서 사용자 정보를 가져와 레벨을 확인하는 코드가 중복되므로 헬퍼 메소드로 분리
-	private void checkLevel(User user, Level expectedLevel){
+	private void checkLevelUpgraded(User user, boolean upgraded){
 		User userUpdate = userDao.get(user.getId());
-		assertThat(userUpdate.getLevel()).isEqualTo(expectedLevel);
+		if (upgraded) {
+			// update가 일어났는지 확인
+			assertThat(userUpdate.getLevel()).isEqualTo(user.getLevel().nextLevel());
+		}else {
+			// update가 일어나지 않았는지 확인
+			assertThat(userUpdate.getLevel()).isEqualTo(user.getLevel());
+		}
 	}
 
 	// 잘 담겨지는데 UserDao.get() 메소드에 문제가 있는 듯..
@@ -99,17 +100,21 @@ class UserServiceTest {
 		userService.add(userWithLevel);
 		userService.add(userWithoutLevel);
 
+
 /*		User userWithLevelRead = userDao.get(userWithLevel.getId());
 		User userwithoutLevelRead = userDao.get(userWithoutLevel.getId());
 
 		assertThat(userWithLevelRead.getLevel()).isEqualTo(userWithLevel.getLevel());
-		assertThat(userwithoutLevelRead.getLevel()).isEqualTo(Level.BASIC);*/
+		assertThat(userwithoutLevelRead.getLevel()).isEqualTo(Level.BASIC);*//*
 
+*/
 /*
 		System.out.println(userDao.get(userWithLevel.getId()));
-		System.out.println(userDao.get(userWithoutLevel.getId()));*/
+		System.out.println(userDao.get(userWithoutLevel.getId()));*//*
 
+		 */
 	}
+
 
 
 }
