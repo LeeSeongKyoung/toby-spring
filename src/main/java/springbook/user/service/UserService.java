@@ -44,7 +44,7 @@ public class UserService {
 	}
 
 	// 레벨 업그레이드 작업 메소드
-	private void upgradeLevel(User user) {
+	protected void upgradeLevel(User user) {
 		user.upgradeLevel();
 		userDao.update(user);
 	}
@@ -56,6 +56,5 @@ public class UserService {
 			userDao.add(user);
 		}
 	}
-
 
 }
