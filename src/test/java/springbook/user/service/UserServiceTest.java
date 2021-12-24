@@ -13,10 +13,13 @@ import springbook.user.dao.UserDao;
 import springbook.user.domain.Level;
 import springbook.user.domain.User;
 
+import javax.sql.DataSource;
+
 import static org.junit.jupiter.api.Assertions.fail;
 import static springbook.user.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
 import static springbook.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,6 +33,8 @@ class UserServiceTest {
 	UserService userService;
 	@Autowired
 	UserDao userDao;
+	@Autowired
+	DataSource dataSource;
 
 	// 테스트 픽처
 	List<User> users;
@@ -77,7 +82,7 @@ class UserServiceTest {
 
 	@Test
 	@DisplayName("사용자 레벨 업그레이드 테스트")
-	public void upgradeLevels(){
+	public void upgradeLevels() throws SQLException {
 		userDao.deleteAll();
 
 		for(User user : users) {
@@ -136,10 +141,11 @@ class UserServiceTest {
 	}
 
 	@Test
-	public void upgradeAllOrNothing(){
+	public void upgradeAllOrNothing() throws Exception{
 		UserService testUserService = new TestUserService(users.get(3).getId());
 		// 예외를 발생시킬 네번째 사용자의 id를 넣어서 테스트용 UserService 대역 오브젝트를 생성
 		testUserService.setUserDao(this.userDao); // userDao를 수동으로 DI
+		testUserService.setDataSource(this.dataSource);
 
 		userDao.deleteAll();
 		for (User user : users) {
@@ -151,7 +157,7 @@ class UserServiceTest {
 			fail("TestUserServiceException expected");
 			// 예외 발생없이 정상적으로 종료되면 fail() 메소드 때문에 테스트 실패
 			// -> 테스트가 의도한 대로 동작하는지 확인용
-		} catch (TestUserService.TestUserServiceException e) {
+		} catch (TestUserService.TestUserServiceException | SQLException e) {
 			// TestUserService가 던져주는 예외를 잡아서 계속 진행되도록함. 그외의 예외라면 테스트 실패
 		}
 
