@@ -9,12 +9,18 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.GenericXmlApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.PlatformTransactionManager;
 import springbook.user.dao.UserDao;
 import springbook.user.domain.Level;
 import springbook.user.domain.User;
+
+import javax.sql.DataSource;
+
+import static org.junit.jupiter.api.Assertions.fail;
 import static springbook.user.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
 import static springbook.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;
 
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,6 +34,10 @@ class UserServiceTest {
 	UserService userService;
 	@Autowired
 	UserDao userDao;
+	@Autowired
+	DataSource dataSource;
+	@Autowired
+	PlatformTransactionManager transactionManager;
 
 	// 테스트 픽처
 	List<User> users;
@@ -43,6 +53,24 @@ class UserServiceTest {
 		);
 	}
 
+	static class TestUserService extends UserService {
+		private String id;
+
+		private TestUserService(String id) {
+			this.id = id;
+		}
+
+		protected void upgradeLevel(User user) {
+			if (user.getId().equals(this.id)) {
+				throw new TestUserServiceException();
+			}
+			super.upgradeLevel(user);
+		}
+
+		static class TestUserServiceException extends RuntimeException{}
+	}
+
+
 	@Test
 	@DisplayName("빈등록확인")
 	public void bean1(){
@@ -57,7 +85,7 @@ class UserServiceTest {
 
 	@Test
 	@DisplayName("사용자 레벨 업그레이드 테스트")
-	public void upgradeLevels(){
+	public void upgradeLevels() throws SQLException {
 		userDao.deleteAll();
 
 		for(User user : users) {
@@ -113,6 +141,32 @@ class UserServiceTest {
 		System.out.println(userDao.get(userWithoutLevel.getId()));*//*
 
 		 */
+	}
+
+	@Test
+	public void upgradeAllOrNothing() throws Exception{
+		UserService testUserService = new TestUserService(users.get(3).getId());
+		// 예외를 발생시킬 네번째 사용자의 id를 넣어서 테스트용 UserService 대역 오브젝트를 생성
+		testUserService.setUserDao(userDao);
+		testUserService.setTransactionManager(transactionManager);
+		// UserService 빈의 프로퍼티 설정과 동일한 수동 DI
+
+		userDao.deleteAll();
+		for (User user : users) {
+			userDao.add(user);
+		}
+
+		try {
+			testUserService.upgradeLevels();
+			fail("TestUserServiceException expected");
+			// 예외 발생없이 정상적으로 종료되면 fail() 메소드 때문에 테스트 실패
+			// -> 테스트가 의도한 대로 동작하는지 확인용
+		} catch (TestUserService.TestUserServiceException | SQLException e) {
+			// TestUserService가 던져주는 예외를 잡아서 계속 진행되도록함. 그외의 예외라면 테스트 실패
+		}
+
+		// 예외가 발생하기 전에 레벨 변경이 있었던 사용자의 레벨이 처음 상태로 바뀌었나 확인
+		checkLevelUpgraded(users.get(1), false);
 	}
 
 

@@ -2,13 +2,24 @@ package springbook.user.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.jta.JtaTransactionManager;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import springbook.user.dao.UserDao;
 import springbook.user.dao.UserDaoJdbc;
 import springbook.user.domain.Level;
 import springbook.user.domain.User;
 
+import javax.sql.DataSource;
+import javax.xml.crypto.Data;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 public class UserService {
@@ -16,19 +27,35 @@ public class UserService {
 	public static final int MIN_LOGCOUNT_FOR_SILVER = 50;
 	public static final int MIN_RECOMMEND_FOR_GOLD = 30;
 
+
 	@Autowired
 	UserDao userDao;
+
+	private PlatformTransactionManager transactionManager;
 
 	public void setUserDao(UserDao userDao) {
 		this.userDao = userDao;
 	}
 
-	public void upgradeLevels() {
-		List<User> users = userDao.getAll();
-		for (User user : users) {
-			if (canUpgradeLevel(user)) {
-				upgradeLevel(user);
+	public void setTransactionManager(PlatformTransactionManager transactionManager) {
+		this.transactionManager = transactionManager;
+	}
+
+	public void upgradeLevels() throws SQLException {
+
+		TransactionStatus status = this.transactionManager.getTransaction(new DefaultTransactionDefinition());
+
+		try {
+			List<User> users = userDao.getAll();
+			for (User user : users) {
+				if (canUpgradeLevel(user)) {
+					upgradeLevel(user);
+				}
 			}
+			this.transactionManager.commit(status);
+		} catch (RuntimeException e) {
+			this.transactionManager.rollback(status);
+			throw e;
 		}
 	}
 
@@ -44,7 +71,7 @@ public class UserService {
 	}
 
 	// 레벨 업그레이드 작업 메소드
-	private void upgradeLevel(User user) {
+	protected void upgradeLevel(User user) {
 		user.upgradeLevel();
 		userDao.update(user);
 	}
@@ -56,6 +83,5 @@ public class UserService {
 			userDao.add(user);
 		}
 	}
-
 
 }
