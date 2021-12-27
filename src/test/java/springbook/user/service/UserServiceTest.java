@@ -17,8 +17,8 @@ import springbook.user.domain.User;
 import javax.sql.DataSource;
 
 import static org.junit.jupiter.api.Assertions.fail;
-import static springbook.user.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
-import static springbook.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;
+import static springbook.user.service.UserServiceImpl.MIN_LOGCOUNT_FOR_SILVER;
+import static springbook.user.service.UserServiceImpl.MIN_RECOMMEND_FOR_GOLD;
 
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -32,6 +32,8 @@ class UserServiceTest {
 
 	@Autowired
 	UserService userService;
+	@Autowired
+	UserServiceImpl userServiceImpl;
 	@Autowired
 	UserDao userDao;
 	@Autowired
@@ -53,7 +55,7 @@ class UserServiceTest {
 		);
 	}
 
-	static class TestUserService extends UserService {
+	static class TestUserService extends UserServiceImpl {
 		private String id;
 
 		private TestUserService(String id) {
@@ -71,6 +73,7 @@ class UserServiceTest {
 	}
 
 
+/*
 	@Test
 	@DisplayName("빈등록확인")
 	public void bean1(){
@@ -78,12 +81,13 @@ class UserServiceTest {
 		String[] beanNames = context.getBeanDefinitionNames();
 		System.out.println(Arrays.toString(beanNames));
 
-		UserService userService = (UserService) context.getBean("userService");
+		UserServiceImpl userService = (UserServiceImpl) context.getBean("userService");
 		System.out.println(userService.userDao != null);
 	}
+*/
 
 
-	@Test
+/*	@Test
 	@DisplayName("사용자 레벨 업그레이드 테스트")
 	public void upgradeLevels() throws SQLException {
 		userDao.deleteAll();
@@ -101,7 +105,9 @@ class UserServiceTest {
 		checkLevelUpgraded(users.get(3), true);
 		checkLevelUpgraded(users.get(4), false);
 
-	}
+	}*/
+
+
 
 	// DB에서 사용자 정보를 가져와 레벨을 확인하는 코드가 중복되므로 헬퍼 메소드로 분리
 	private void checkLevelUpgraded(User user, boolean upgraded){
@@ -145,11 +151,13 @@ class UserServiceTest {
 
 	@Test
 	public void upgradeAllOrNothing() throws Exception{
-		UserService testUserService = new TestUserService(users.get(3).getId());
-		// 예외를 발생시킬 네번째 사용자의 id를 넣어서 테스트용 UserService 대역 오브젝트를 생성
+		TestUserService testUserService = new TestUserService(users.get(3).getId());
 		testUserService.setUserDao(userDao);
-		testUserService.setTransactionManager(transactionManager);
-		// UserService 빈의 프로퍼티 설정과 동일한 수동 DI
+
+		UserServiceTx txUserService = new UserServiceTx();
+		txUserService.setTransactionManager(transactionManager);
+		txUserService.setUserService(testUserService);
+
 
 		userDao.deleteAll();
 		for (User user : users) {
@@ -157,11 +165,11 @@ class UserServiceTest {
 		}
 
 		try {
-			testUserService.upgradeLevels();
+			txUserService.upgradeLevels();
 			fail("TestUserServiceException expected");
 			// 예외 발생없이 정상적으로 종료되면 fail() 메소드 때문에 테스트 실패
 			// -> 테스트가 의도한 대로 동작하는지 확인용
-		} catch (TestUserService.TestUserServiceException | SQLException e) {
+		} catch (TestUserService.TestUserServiceException e) {
 			// TestUserService가 던져주는 예외를 잡아서 계속 진행되도록함. 그외의 예외라면 테스트 실패
 		}
 
