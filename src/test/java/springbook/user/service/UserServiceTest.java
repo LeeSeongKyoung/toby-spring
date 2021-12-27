@@ -17,10 +17,12 @@ import springbook.user.domain.User;
 import javax.sql.DataSource;
 
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.*;
 import static springbook.user.service.UserServiceImpl.MIN_LOGCOUNT_FOR_SILVER;
 import static springbook.user.service.UserServiceImpl.MIN_RECOMMEND_FOR_GOLD;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -72,42 +74,58 @@ class UserServiceTest {
 		static class TestUserServiceException extends RuntimeException{}
 	}
 
+	static class MockUserDao implements UserDao {
+		// 레벨 업그레이드 후보 User 오브젝트 목록
+		private List<User> users;
+		// 업그레이드 대상 오브젝트를 저장해둘 목록
+		private List<User> updated = new ArrayList<>();
 
-/*
-	@Test
-	@DisplayName("빈등록확인")
-	public void bean1(){
-		ApplicationContext context = new GenericXmlApplicationContext("/applicationContext.xml");
-		String[] beanNames = context.getBeanDefinitionNames();
-		System.out.println(Arrays.toString(beanNames));
-
-		UserServiceImpl userService = (UserServiceImpl) context.getBean("userService");
-		System.out.println(userService.userDao != null);
-	}
-*/
-
-
-/*	@Test
-	@DisplayName("사용자 레벨 업그레이드 테스트")
-	public void upgradeLevels() throws SQLException {
-		userDao.deleteAll();
-
-		for(User user : users) {
-			userDao.add(user);
+		private MockUserDao(List<User> users) {
+			this.users = users;
 		}
 
-		userService.upgradeLevels();
+		private List<User> getUpdated() {
+			return this.updated;
+		}
 
-		// 각 사용자별로 업그레이드 후의 예상 레벨을 검증
-		checkLevelUpgraded(users.get(0), false);
-		checkLevelUpgraded(users.get(1), true);
-		checkLevelUpgraded(users.get(2), false);
-		checkLevelUpgraded(users.get(3), true);
-		checkLevelUpgraded(users.get(4), false);
+		// 스텁기능 제공
+		public List<User> getAll(){
+			return this.users;
+		}
 
-	}*/
+		// 목 오브젝트 기능 제공
+		public void update(User user) {
+			updated.add(user);
+		}
 
+		// 테스트에 사용되지 않는 메소드
+		public void add(User user){throw new UnsupportedOperationException();}
+		public void deleteAll(){throw new UnsupportedOperationException();}
+		public User get(String id){throw new UnsupportedOperationException();}
+		public int getCount() { throw new UnsupportedOperationException();}
+	}
 
+	@Test
+	@DisplayName("사용자 레벨 업그레이드 테스트")
+	public void upgradeLevels() throws Exception{
+
+		UserServiceImpl userServiceImpl = new UserServiceImpl();
+
+		MockUserDao mockUserDao = new MockUserDao(this.users);
+		userServiceImpl.setUserDao(mockUserDao);
+
+		userServiceImpl.upgradeLevels();
+
+		List<User> updated = mockUserDao.getUpdated();
+		assertThat(updated.size()).isEqualTo(2);
+		checkUserAndLevel(updated.get(0), "joytouch", Level.SILVER);
+		checkUserAndLevel(updated.get(1), "madnite1", Level.GOLD);
+	}
+
+	private void checkUserAndLevel(User updated, String expectedId, Level expectedLevel) {
+		assertThat(updated.getId()).isEqualTo(expectedId);
+		assertThat(updated.getLevel()).isEqualTo(expectedLevel);
+	}
 
 	// DB에서 사용자 정보를 가져와 레벨을 확인하는 코드가 중복되므로 헬퍼 메소드로 분리
 	private void checkLevelUpgraded(User user, boolean upgraded){
@@ -177,6 +195,23 @@ class UserServiceTest {
 		checkLevelUpgraded(users.get(1), false);
 	}
 
+	// Mockito를 적용한 테스트 코드
+	@Test
+	public void mockUpgradeLevels() throws Exception {
+		UserServiceImpl userServiceImpl = new UserServiceImpl();
 
+		UserDao mockUserDao = mock(UserDao.class);
+		when(mockUserDao.getAll()).thenReturn(this.users);
+		userServiceImpl.setUserDao(mockUserDao);
+
+		userServiceImpl.upgradeLevels();
+
+		verify(mockUserDao, times(2)).update(any(User.class));
+		verify(mockUserDao, times(2)).update(any(User.class));
+		verify(mockUserDao).update(users.get(1));
+		assertThat(users.get(1).getLevel()).isEqualTo(Level.SILVER);
+		verify(mockUserDao).update(users.get(3));
+		assertThat(users.get(3).getLevel()).isEqualTo(Level.GOLD);
+	}
 
 }
