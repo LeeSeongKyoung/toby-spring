@@ -11,10 +11,10 @@
         <property name="password" value="password" />
     </bean>
 
-<!--    <bean id="userService" class="springbook.user.service.UserServiceImpl">
-        <property name="userDao" ref="userDao"/>
-        <property name="transactionManager" ref="transactionManager"/>
-    </bean>-->
+    <!--    <bean id="userService" class="springbook.user.service.UserServiceImpl">
+            <property name="userDao" ref="userDao"/>
+            <property name="transactionManager" ref="transactionManager"/>
+        </bean>-->
     <bean id="userService" class="springbook.user.service.UserServiceTx">
         <property name="transactionManager" ref="transactionManager"/>
         <property name="userService" ref="userServiceImpl"/> <!--데코레이터-->
