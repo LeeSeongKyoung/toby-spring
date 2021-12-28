@@ -3,7 +3,7 @@ package springbook.learningtest.spring.factorybean;
 public class Message {
 	String text;
 
-	// 생성가자 private으로 선언되어있어서 생성자를 통해 오브젝트를 만들 수 없다
+	// 생성자가 private으로 선언되어있어서 생성자를 통해 오브젝트를 만들 수 없다
 	private Message(String text) {
 		this.text = text;
 	}
@@ -16,6 +16,5 @@ public class Message {
 	public static Message newMessage(String text) {
 		return new Message(text);
 	}
-
 
 }
