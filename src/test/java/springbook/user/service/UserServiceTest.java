@@ -5,6 +5,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -41,6 +43,8 @@ class UserServiceTest {
 	DataSource dataSource;
 	@Autowired
 	PlatformTransactionManager transactionManager;
+	@Autowired
+	ApplicationContext context;
 
 	// 테스트 픽처
 	List<User> users;
@@ -167,21 +171,17 @@ class UserServiceTest {
 	}
 
 	@Test
+	@DirtiesContext // 다이내믹 프록시 팩토리 빈을 직접 만들어 사용할 때는 없앴다가 다시 등장한 컨텍스트 무효화 애노테이션
 	public void upgradeAllOrNothing() throws Exception{
 		TestUserService testUserService = new TestUserService(users.get(3).getId());
 		testUserService.setUserDao(userDao);
 
-/*		UserServiceTx txUserService = new UserServiceTx();
-		txUserService.setTransactionManager(transactionManager);
-		txUserService.setUserService(testUserService);*/
-		TransactionHandler txHandler = new TransactionHandler();
-		txHandler.setTarget(testUserService);
-		txHandler.setTransactionManager(transactionManager);
-		txHandler.setPattern("upgradeLevels");
-
-		UserService txUserService = (UserService) Proxy.newProxyInstance(
-				getClass().getClassLoader(), new Class[] {UserService.class}, txHandler
-		);
+		TxProxyFactoryBean txProxyFactoryBean = context.getBean("&userService", TxProxyFactoryBean.class);
+		// 팩토리 빈 자체를 가져와야 하므로 빈 이름에 &를 반드시 넣어야함
+		// 테스트용 타깃 주입
+		txProxyFactoryBean.setTarget(testUserService);
+		UserService txUserService = (UserService)txProxyFactoryBean.getObject();
+		// 변경된 타깃 설정을 이용해서 트랜잭션 다이내믹 프록시 오브젝트를 다시 생성
 
 		userDao.deleteAll();
 		for (User user : users) {

@@ -11,16 +11,14 @@
         <property name="password" value="password" />
     </bean>
 
-<!--    <bean id="userService" class="springbook.user.service.UserServiceImpl">
-        <property name="userDao" ref="userDao"/>
+    <!--UserService에 대한 트랜잭션 프록시 팩토리빈-->
+    <bean id="userService" class="springbook.user.service.TxProxyFactoryBean">
+        <property name="target" ref="userServiceImpl"/>
         <property name="transactionManager" ref="transactionManager"/>
-    </bean>-->
-    <bean id="userService" class="springbook.user.service.UserServiceTx">
-        <property name="transactionManager" ref="transactionManager"/>
-        <property name="userService" ref="userServiceImpl"/> <!--데코레이터-->
+        <property name="pattern" value="upgradeLevels"/>
+        <property name="serviceInterface" value="springbook.user.service.UserService"/>
     </bean>
 
-    <!--타깃-->
     <bean id="userServiceImpl" class="springbook.user.service.UserServiceImpl">
         <property name="userDao" ref="userDao"/>
     </bean>

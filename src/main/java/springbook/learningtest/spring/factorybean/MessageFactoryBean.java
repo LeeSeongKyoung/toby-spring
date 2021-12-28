@@ -3,7 +3,7 @@ package springbook.learningtest.spring.factorybean;
 import org.springframework.beans.factory.FactoryBean;
 
 public class MessageFactoryBean implements FactoryBean<Message> {
-	// 오브젝트를 생성할 때 필요한 정보를 팩토리 빈의 프로퍼티로 설정해서 대신 DI받을 수 있게 한다.
+	// 오브젝트를 생성할 때 필요한 정보를 팩토리 빈의 프로퍼티로 설정해서 대신 DI 받을 수 있게 한다.
 	// 주입된 정보는 오브젝트 생성 중에 사용된다.
 	String text;
 
