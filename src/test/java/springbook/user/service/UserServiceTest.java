@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 import static springbook.user.service.UserServiceImpl.MIN_LOGCOUNT_FOR_SILVER;
 import static springbook.user.service.UserServiceImpl.MIN_RECOMMEND_FOR_GOLD;
 
+import java.lang.reflect.Proxy;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -172,10 +173,17 @@ class UserServiceTest {
 		TestUserService testUserService = new TestUserService(users.get(3).getId());
 		testUserService.setUserDao(userDao);
 
-		UserServiceTx txUserService = new UserServiceTx();
+/*		UserServiceTx txUserService = new UserServiceTx();
 		txUserService.setTransactionManager(transactionManager);
-		txUserService.setUserService(testUserService);
+		txUserService.setUserService(testUserService);*/
+		TransactionHandler txHandler = new TransactionHandler();
+		txHandler.setTarget(testUserService);
+		txHandler.setTransactionManager(transactionManager);
+		txHandler.setPattern("upgradeLevels");
 
+		UserService txUserService = (UserService) Proxy.newProxyInstance(
+				getClass().getClassLoader(), new Class[] {UserService.class}, txHandler
+		);
 
 		userDao.deleteAll();
 		for (User user : users) {
